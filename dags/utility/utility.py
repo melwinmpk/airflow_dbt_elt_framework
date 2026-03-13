@@ -5,52 +5,45 @@ import os
 import json
 import boto3
 import io
+from dateutil.relativedelta import relativedelta
 
 
 
-def get_lastextract_mysql(data):
+def get_metadata_mysql(data):
+    result = {}
     mysql_obj = mysql_db_helper('ecomm')
     table_name = data.get('table_name',None)
-    df = mysql_obj.query_exec_getresult(f'''SELECT last_extract_date FROM metadata_config  
-                                            WHERE  table_name = {table_name};''')
+    df = mysql_obj.query_exec_getresult(f'''SELECT * FROM metadata_config  
+                                            WHERE  table_name = '{table_name}';''')
     mysql_obj.connection_close()
+    for column in df.columns:
+        result[column] = df[column][0]
 
-    return df 
+    return result 
+
+def get_next_last_extract_date(data):
+    meta_data = data.get("meta_data",None)
+    last_extract_date = meta_data.get("last_extracxt_date",None)
+    next_last_extract_date = last_extract_date + relativedelta(months=1)
+    return next_last_extract_date
+
 
 def upload_data_to_s3(data):
 
     print("============== Uploading Data to S3 =============== ")
 
-    source_database_name = data.get("source_database_name","")
-    table_name = data.get("table_name","")
-    current_extract_date_objs = data.get("current_extract_date_objs","")
-    destination_bucket = data.get('destination_bucket',"")
-    destination_s3_dir_path = data.get('destination_s3_dir_path', "")
-
-
-    s3_client = boto3.client('s3')
-    db = database_helper(source_database_name)
-
-    for date in current_extract_date_objs:
-
-        query = f'''Select * from {source_database_name}.{table_name} where business_date = '{date}';'''
-        df = db.query_exec_getresult(query)
-
-        date_string = f'''{date.strftime('%Y')}{date.strftime('%m')}{date.strftime('%d')}'''
-
-        outdir_path = f'{destination_s3_dir_path}{destination_database_name}/{table_name}/{date_string}'
-        filename = f'{date_string}-{table_name.replace("_","-")}.csv'
-
-        with io.StringIO() as csv_buffer:
-            df.to_csv(csv_buffer, sep=',',index=False, encoding='utf-8')
-
-            response = s3_client.put_object(Bucket = destination_bucket, Key = f'{outdir_path}/{filename}', Body = csv_buffer.getvalue())
-
-            status = response.get("ResponseMetadata",{}).get("HTTPStatusCode")
-
-            if status == 200:
-                print(f" File = {filename} loaded to S3 path {destination_bucket}/{outdir_path}/ Succesfully Status {status} ")
-            else:
-                print(f" File was upload Unsuccesfully Status {status} ")
+    table_name = data.get('table_name',None)
+    extract_date = get_next_last_extract_date(data,None)
+    tbl_query = data["meta_data"].get('tbl_query',None)
+    tbl_query = (tbl_query.replace('__YEAR__',f"'{extract_date.year}'")).replace('__MONTH__',f"'{extract_date.month}'")
+    
+    folder_path = f"/home/de24/S3_BUCKET/RAW/{source_database_name}/{table_name}/{extract_date.year}{extract_date.month if extract_date.month > 9 else '0'+str(extract_date.month) }/"
+    os.makedirs(folder_path, exist_ok=True)
+    
+    mysql_obj = mysql_db_helper('ecomm')
+    df = mysql_obj.query_exec_getresult(f'''{tbl_query}''')
+    
+    df.to_csv(f"{folder_path}/data.csv", index=False)
+    mysql_obj.connection_close()
 
     print("============== Upload Data Task End =============== ")

@@ -3,7 +3,7 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python_operator import PythonOperator
 from utility.database_helper import database_helper,snowflake_helper
-from utility.utility import get_lastextract_mysql, get_currentdate_extract_mysql, update_mysql_config, upload_data_to_s3
+from utility.utility import get_lastextract_mysql, get_currentdate_extract_mysql, update_mysql_config, upload_data_to_s3, get_tbl_query_mysql, get_metadata_mysql
 import json
 
 main_data = {
@@ -16,17 +16,21 @@ main_data = {
 def Upload_data_to_s3(ti):
 
     # Get Last extract Date from MYSQL Config Schema
-    mysql_df = get_lastextract_mysql(main_data)
+    # mysql_df = get_lastextract_mysql(main_data)
+    # tbl_query = get_tbl_query_mysql(main_data)
+    meta_data = get_metadata_mysql(main_data)
+
 
     # Get Current Extract Dates (It couls be moer than 1 Date) get it from on-prem Database
-    current_extract_date_objs = get_currentdate_extract_mysql(mysql_df,main_data)
+    #current_extract_date_objs = get_currentdate_extract_mysql(mysql_df,main_data)
 
     data = {
         "table_name":main_data["table_name"],
         "source_database_name": main_data["source_database_name"],
         "current_extract_date_objs":current_extract_date_objs,
         "destination_bucket":main_data["destination_bucket"],
-        "destination_s3_dir_path":main_data["destination_s3_dir_path"]
+        "destination_s3_dir_path":main_data["destination_s3_dir_path"],
+        "meta_data":meta_data
            }
 
     upload_data_to_s3(data)
