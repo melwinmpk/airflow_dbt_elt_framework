@@ -1,10 +1,11 @@
 import datetime
-from airflow import DAG
+from airflow.sdk import DAG
 from airflow.operators.empty import EmptyOperator
-from airflow.operators.python_operator import PythonOperator
-from utility.database_helper import database_helper,snowflake_helper
-from utility.utility import get_lastextract_mysql, get_currentdate_extract_mysql, update_mysql_config, upload_data_to_s3, get_tbl_query_mysql, get_metadata_mysql
+from airflow.operators.python import PythonOperator
+from utility.utility import upload_data_to_s3,  get_metadata_mysql, update_mysql_config
 import json
+
+
 
 main_data = {
         'source_database_name' : 'ecomm',
@@ -27,7 +28,6 @@ def Upload_data_to_s3(ti):
     data = {
         "table_name":main_data["table_name"],
         "source_database_name": main_data["source_database_name"],
-        "current_extract_date_objs":current_extract_date_objs,
         "destination_bucket":main_data["destination_bucket"],
         "destination_s3_dir_path":main_data["destination_s3_dir_path"],
         "meta_data":meta_data
@@ -43,7 +43,7 @@ def update_config():
     update_mysql_config(data)
 
 with DAG(
-    dag_id="Snowflake_ExternalStage_source_amazonebook_review_Dag",
+    dag_id="ecomm_mysql_to_s3_Dag",
     start_date=datetime.datetime(2024,1,1),
     schedule=None
     ) as dag:

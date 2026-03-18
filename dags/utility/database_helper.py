@@ -19,11 +19,12 @@ class mysql_db_helper:
 
     def query_exec(self,query):
         try:
+            # One Query at a time
             self.curr.execute(query)          
             # 1. Check success
             print(f"Rows affected: {self.curr.rowcount}")
             # 2. Save the changes
-            self.curr.commit() 
+            self.conn.commit() 
             print("Changes committed to the database.")
         except mysql.connector.Error as err:
             # 3. If an error occurs, the execution stops and goes here

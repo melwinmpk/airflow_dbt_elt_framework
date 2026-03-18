@@ -3,7 +3,7 @@ from .database_helper import mysql_db_helper
 import pandas as pd
 import os
 import json
-import boto3
+#import boto3
 import io
 from dateutil.relativedelta import relativedelta
 
@@ -33,7 +33,8 @@ def upload_data_to_s3(data):
     print("============== Uploading Data to S3 =============== ")
 
     table_name = data.get('table_name',None)
-    extract_date = get_next_last_extract_date(data,None)
+    extract_date = get_next_last_extract_date(data)
+    source_database_name = data.get('source_database_name',None)
     tbl_query = data["meta_data"].get('tbl_query',None)
     tbl_query = (tbl_query.replace('__YEAR__',f"'{extract_date.year}'")).replace('__MONTH__',f"'{extract_date.month}'")
     
@@ -47,3 +48,14 @@ def upload_data_to_s3(data):
     mysql_obj.connection_close()
 
     print("============== Upload Data Task End =============== ")
+
+def update_mysql_config(data):
+    meta_data = get_metadata_mysql(data)
+    data["meta_data"] = meta_data
+    extract_date = get_next_last_extract_date(data)
+    mysql_obj = mysql_db_helper('ecomm')
+    table_name = data.get('table_name',None)
+    df = mysql_obj.query_exec(f'''UPDATE metadata_config
+                                  SET last_extracxt_date = '{extract_date.strftime("%Y-%m-%d %H:%M:%S")}'
+                                  WHERE  table_name = '{table_name}';''')
+    mysql_obj.connection_close()
