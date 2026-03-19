@@ -29,14 +29,13 @@ def parallel_table_pipeline():
         @task
         def Upload_data_to_s3(table_name):
 
-            meta_data = get_metadata_mysql(main_data)
-
+            
+            
             data = {
                 "table_name":table_name,
                 "source_database_name": main_data["source_database_name"],
                 "destination_bucket":main_data["destination_bucket"],
-                "destination_s3_dir_path":main_data["destination_s3_dir_path"],
-                "meta_data":meta_data
+                "destination_s3_dir_path":main_data["destination_s3_dir_path"]
                 }
 
             upload_data_to_s3(data)
