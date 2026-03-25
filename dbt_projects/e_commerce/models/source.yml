@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: bronze_layer
+    database: ecom
+    schema: bronze
+    tables:
+      - name: customer
+        description: "Partitioned customer data linked to local CSV files"
+        columns:
+          - name: partition_key  # Changed from load_month to match your DDL
+            description: "Partition key (YYYYMM) used for file mapping"
