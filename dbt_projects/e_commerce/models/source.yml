@@ -10,3 +10,9 @@ sources:
         columns:
           - name: partition_key  # Changed from load_month to match your DDL
             description: "Partition key (YYYYMM) used for file mapping"
+      - name: orders
+        description: "Partitioned customer data linked to local CSV files"
+        columns:
+          - name: partition_key  # Changed from load_month to match your DDL
+            description: "Partition key (YYYYMM) used for file mapping"
+

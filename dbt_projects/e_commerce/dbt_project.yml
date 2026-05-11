@@ -40,7 +40,7 @@ models:
     example:
       +materialized: view
 
-# on-run-start: THESE NEEDS TO RUN IN POSTGRESS TERMINAL ONCE
+# on-run-start:
 #   - "CREATE EXTENSION IF NOT EXISTS file_fdw;"
 #   - "CREATE SERVER IF NOT EXISTS pg_local_files FOREIGN DATA WRAPPER file_fdw;"
 #   - "GRANT USAGE ON FOREIGN SERVER pg_local_files TO ecomm_user;"

@@ -11,7 +11,7 @@
             customer_state VARCHAR(2),
             partition_key VARCHAR(6)
         ) PARTITION BY LIST (partition_key);",
-        generate_customer_partitions(['201609','201610', '201611'])
+        "{% if execute %}{{ generate_customer_partitions(get_partition_months('customer')) }}{% endif %}"
     ]
 ) }}
 
@@ -21,5 +21,5 @@ select
     customer_zip_code_prefix,
     customer_city,
     customer_state,
-    partition_key as yyyymm  -- This will now be populated correctly!
+    partition_key as yyyymm 
 from {{ source('bronze_layer', 'customer') }}
