@@ -12,7 +12,8 @@
             partition_key VARCHAR(6)
         ) PARTITION BY LIST (partition_key);",
         "{% if execute %}{{ generate_customer_partitions(get_partition_months('customer')) }}{% endif %}"
-    ]
+    ],
+    post_hook=["{{ update_metadata('customer') }}"]
 ) }}
 
 select 

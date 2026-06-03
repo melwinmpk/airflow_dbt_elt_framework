@@ -13,7 +13,8 @@
             partition_key VARCHAR(6)
         ) PARTITION BY LIST (partition_key);",
         "{% if execute %}{{ generate_orders_partitions(get_partition_months('orders')) }}{% endif %}"
-    ]
+    ],
+    post_hook=["{{ update_metadata('orders') }}"]
 ) }}
 
 select 

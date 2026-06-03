@@ -1,4 +1,4 @@
-version: 2
+version: 3
 
 sources:
   - name: bronze_layer
@@ -11,8 +11,29 @@ sources:
           - name: partition_key  # Changed from load_month to match your DDL
             description: "Partition key (YYYYMM) used for file mapping"
       - name: orders
-        description: "Partitioned customer data linked to local CSV files"
+        description: "Partitioned orders data linked to local CSV files"
         columns:
           - name: partition_key  # Changed from load_month to match your DDL
             description: "Partition key (YYYYMM) used for file mapping"
+      - name: order_items
+        description: "Partitioned orderd items  data linked to local CSV files"
+        columns:
+          - name: partition_key  # Changed from load_month to match your DDL
+            description: "Partition key (YYYYMM) used for file mapping"
+      - name: order_payments
+        description: "Partitioned orderd payments data linked to local CSV files"
+        columns:
+          - name: partition_key  # Changed from load_month to match your DDL
+            description: "Partition key (YYYYMM) used for file mapping"
+      - name: order_reviews
+        description: "Partitioned orderd reviews data linked to local CSV files"
+        columns:
+          - name: partition_key  # Changed from load_month to match your DDL
+            description: "Partition key (YYYYMM) used for file mapping"
+      - name: sellers
+        description: "Partitioned sellers data linked to local CSV files"
+        columns:
+          - name: partition_key  # Changed from load_month to match your DDL
+            description: "Partition key (YYYYMM) used for file mapping"
+      
 
