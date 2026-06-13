@@ -35,8 +35,12 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   e_commerce:
     # Config indicated by + and applies to all files under models/example/
-    staging:
+    bronze:
       +enabled: true
+      +schema: bronze
+    silver:
+      +enabled: true
+      +schema: silver
     example:
       +materialized: view
 
