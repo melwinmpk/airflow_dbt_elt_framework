@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: Customer dimension table
+
+    columns:
+      - name: customer_sk
+        description: Surrogate key
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        description: Source customer id
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_unique_id
+        description: Business customer id
+        tests:
+          - not_null
+
+      - name: customer_city
+        description: Customer city
+
+      - name: customer_state
+        description: Customer state
