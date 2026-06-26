@@ -2,8 +2,7 @@
     source_schema,
     source_table,
     destination_schema,
-    destination_table,
-    scd_type
+    destination_table
 ) %}
 
     {% if scd_type not in [1,2] %}
@@ -19,17 +18,40 @@
         destination_table
     ) %}
 
-    {% set pk_cols = metadata['primary_keys'] %}
-    {% set timestamp_col = metadata['timestamp_column'] %}
+    {% set target_schema = metadata['target_schema'] %}
+    {% set target_table = metadata['target_table'] %}
+    {% set source_schema = metadata['source_schema'] %}
+    {% set source_table = metadata['source_table'] %}
+    {% set extract_date_column = metadata['extract_date_column'] %}
+    {% set load_type = metadata['load_type'] %}
+    {% set scd_type = metadata['scd_type'] %}
+    {% set hash_column_name = metadata['hash_column_name'] %}
+    {% set column_data = metadata['column_data'] %}
+    {% set column_names = metadata['column_names'] %}
+    {% set primary_keys = metadata['primary_keys'] %}
+    {% set scd2_columns = metadata['scd2_columns'] %}
+    {% set audit_columns = metadata['audit_columns'] %}
 
-    {{ log("Primary Keys : " ~ pk_cols, info=True) }}
-    {{ log("Timestamp Col : " ~ timestamp_col, info=True) }}
+
+    {{ log("target_table Keys : " ~ target_table, info=True) }}
+    {{ log("column_names : " ~ column_names, info=True) }}
 
     {% if scd_type == 1 %}
 
         -- Type 1 logic here
 
     {% elif scd_type == 2 %}
+
+    -- source_schema, (done)
+    -- source_table, (done)
+    -- pk_columns, -- need to segregate it
+    -- source_partiton_column, 
+    -- tracked_columns, -- need to segregate it
+    -- target_schema, (done)
+    -- target_table,  (done)
+
+    scd2_load(source_schema, source_table, primary_keys, extract_date_column, 
+              column_names, target_schema, target_table)
 
         -- Type 2 logic here
 

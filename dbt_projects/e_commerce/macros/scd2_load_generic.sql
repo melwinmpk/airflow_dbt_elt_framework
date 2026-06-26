@@ -1,8 +1,4 @@
 {% macro scd2_load(
-    source_relation,
-    tracked_columns,
-    partition_column,
-
     source_schema,
     source_table,
     pk_columns, -- considering source and target have the same primary krys and name
@@ -111,21 +107,21 @@ expired_versions as (
     new_versions as (
             select
 
-        md5(
-            concat(
-                cast(seller_id as varchar),
-                current_timestamp()
-            )
-        ) as seller_sk,
-        seller_id,
-        seller_zip_code_prefix,
-        seller_city,
-        seller_state,
-        partition_key,
-        record_hash,
-        current_timestamp() as created_date,
-        null as expired_date,
-        true as is_latest
+        -- md5(
+        --     concat(
+        --         cast(seller_id as varchar),
+        --         current_timestamp()
+        --     )
+        -- ) as seller_sk,
+        -- seller_id,
+        -- seller_zip_code_prefix,
+        -- seller_city,
+        -- seller_state,
+        -- partition_key,
+        -- record_hash,
+        -- current_timestamp() as created_date,
+        -- null as expired_date,
+        -- true as is_latest
 
 
 
@@ -170,16 +166,6 @@ SET
     expired_date = CURRENT_TIMESTAMP() 
 WHEN NOT MATCHED
 THEN INSERT (
-        seller_sk,
-        seller_id,
-        seller_zip_code_prefix,
-        seller_city,
-        seller_state,
-        partition_key,
-        record_hash,
-        created_date,
-        expired_date,
-        is_latest
 
          {% for col in tracked_columns %}
             {{ col }}
