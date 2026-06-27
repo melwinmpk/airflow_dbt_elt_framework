@@ -1,34 +1,16 @@
-{% macro scd2_load(
-    source_schema,
-    source_table,
-    pk_columns, -- considering source and target have the same primary krys and name
-    source_partiton_column,
-    tracked_columns, -- considering source and target have the same target column
-    target_schema,
-    target_table,
-    business_keys
-) %}
+{% macro scd2_load(source_schema,source_table, pk_columns, source_partiton_column, scd2_columns, tracked_columns, target_schema, target_table) %}
 
-{% set join_condition %}
-    {% for key in business_keys %}
-        src.{{ key }} = tgt.{{ key }}
-        {% if not loop.last %}
-            and
-        {% endif %}
-    {% endfor %}
-{% endset %}
-
-merge into silver.dim_sellers target
+merge into {{target_schema}}.{{target_table}} target
 using (
 with source_data as (
     select *
     from {{source_schema}}.{{ source_table }}
     where {{ source_partiton_column }} >
     (
-        select extract_date_column
+        select MAX({{ source_partiton_column }})
         from {{target_schema}}.table_load_config 
-        WHERE target_table = {{target_table}} and 
-              target_schema = {{target_schema}}
+        WHERE target_table = '{{target_table}}' and  {# -- FIXED: Added quotes #}
+              target_schema = '{{target_schema}}'   {# -- FIXED: Added quotes #}
     )
 ),
 source_hash as (
@@ -37,7 +19,7 @@ source_hash as (
         sha2(
             concat_ws(
                 '|'
-                {% for col in tracked_columns %}
+                {% for col in scd2_columns %}
                     ,coalesce(cast({{ col }} as varchar),'')
                 {% endfor %}
             ), 256
@@ -76,7 +58,7 @@ change_detection as (
             else 'UNCHANGED'
         end as change_type
     from source_hash src
-    left join active_target tgt
+    left join target_active tgt
         on  {% for col in pk_columns %}
             src.{{ col }} = tgt.{{ col }}
                 {% if not loop.last %}
@@ -85,52 +67,39 @@ change_detection as (
         {% endfor %}
 ),
 expired_versions as (
-        -- this is Good approach 
     select
         {% for col in tracked_columns %}
-            {% if {{ col }} == 'expired_date' %}
-                current_timestamp() as {{ col }},
-            {% else if  {{ col }} == 'is_latest' %}
-                false as {{ col }}, 
-            {% else if  {{ col }} == 'expired_date' %}
-                current_timestamp() as {{ col }}   , 
+            {% if  col  == 'expired_date' %}
+                current_timestamp as {{ col }}
+            {% elif   col  == 'is_latest' %}
+                false as {{ col }} 
             {% else %}
-                {{ col }},
+                tgt.{{ col }}  {# -- FIXED: Added table prefix to avoid ambiguity #}
             {% endif %}
-        {% endfor %}
+            {% if not loop.last %}
+                ,
+            {% endif %}
+        {% endfor %},  {# -- FIXED: Placed comma outside loop safely #}
         'EXPIRED' as change_type 
     from target_active tgt
     join change_detection ch
-        on tgt.seller_id = ch.seller_id
+        on 
+        {% for col in pk_columns %}
+            tgt.{{ col }} = ch.{{ col }}
+                {% if not loop.last %}
+                    and
+                {% endif %}
+        {% endfor %}
     where ch.change_type = 'CHANGED'
     ),
     new_versions as (
-            select
-
-        -- md5(
-        --     concat(
-        --         cast(seller_id as varchar),
-        --         current_timestamp()
-        --     )
-        -- ) as seller_sk,
-        -- seller_id,
-        -- seller_zip_code_prefix,
-        -- seller_city,
-        -- seller_state,
-        -- partition_key,
-        -- record_hash,
-        -- current_timestamp() as created_date,
-        -- null as expired_date,
-        -- true as is_latest
-
-
-
+        select
         {% for col in tracked_columns %}
-            {% if {{ col }} == 'created_date' %}
-                current_timestamp() as {{ col }}
-            {% else if  {{ col }} == 'is_latest' %}
+            {% if  col  == 'created_date' %}
+                current_timestamp as {{ col }}
+            {% elif   col  == 'is_latest' %}
                 true as {{ col }}
-            {% else if  {{ col }} == 'expired_date' %}
+            {% elif   col  == 'expired_date' %}
                 null as {{ col }}
             {% else %}
                 {{ col }}
@@ -163,10 +132,9 @@ WHEN MATCHED
 THEN UPDATE
 SET
     is_latest = FALSE,
-    expired_date = CURRENT_TIMESTAMP() 
+    expired_date = CURRENT_TIMESTAMP 
 WHEN NOT MATCHED
 THEN INSERT (
-
          {% for col in tracked_columns %}
             {{ col }}
             {% if not loop.last %}
@@ -174,8 +142,7 @@ THEN INSERT (
             {% endif %}
         {% endfor %}
         ) 
- VALUES (
-
+VALUES (
         {% for col in tracked_columns %}
             source.{{ col }}
             {% if not loop.last %}

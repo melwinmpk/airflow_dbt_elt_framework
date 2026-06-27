@@ -1,8 +1,8 @@
 {% macro get_table_metadata(
     target_schema,
-    target_table
+    target_table,
     source_schema,
-    source_table,
+    source_table
 ) %}
 
     {% set query %}

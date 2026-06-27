@@ -1,4 +1,4 @@
-{% macro scd2_load(
+{% macro scd2_load_notworking(
     source_relation,
     business_keys,
     tracked_columns,
