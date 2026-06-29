@@ -28,3 +28,6 @@ select
     end as is_delayed
     ,partition_key 
 from {{ ref('brz_orders') }}
+{% if is_incremental() %}
+    where partition_key > (    select max(partition_key) from {{ this }}  )
+{% endif %}
