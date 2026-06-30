@@ -1,11 +1,7 @@
 {{ config(
-    materialized='ephemeral'
-) }}
-
-{% if execute %}
-    {# 1. Create physical table if it doesn't exist #}
-    {% set create_table_sql %}
-        CREATE TABLE IF NOT EXISTS silver.dim_sellers ( 
+    materialized='view',
+    pre_hook=[
+        "CREATE TABLE IF NOT EXISTS silver.dim_sellers ( 
             seller_id VARCHAR(32),
             seller_zip_code_prefix INTEGER,
             seller_city VARCHAR(40),
@@ -15,23 +11,26 @@
             created_date TIMESTAMP,
             expired_date TIMESTAMP,
             is_latest BOOLEAN
-        );
-    {% endset %}
-    {% do run_query(create_table_sql) %}
+        );",
+        "{% if execute %}{{ load_dimension('bronze', 'sellers', 'silver', 'dim_sellers') }}{% endif %}"
+    ],
+    post_hook=["{{ update_metadata('customer') }}"]
+) }}
 
-    {# 2. Run the custom merge script #}
-    {% set merge_sql %}
-        {{ load_dimension('bronze', 'sellers', 'silver', 'dim_sellers') }}
-    {% endset %}
+{{ config(
+    materialized='ephemeral'
+) }}
 
-    {# 3. FIXED: Explicitly commit the transaction so PostgreSQL keeps the data #}
-    {#
-        PostgreSQL transaction is not committed automatically when executing
-        MERGE via run_query() in this execution pattern.
-        An explicit COMMIT is required to persist the changes.
-    #}
-    {% do run_query("COMMIT;") %}
-    
-{% endif %}
+SELECT 
+seller_id
+,seller_zip_code_prefix
+,seller_city
+,seller_state
+,partition_key
+,record_hash
+,created_date
+,expired_date
+,is_latest
+FROM silver.dim_sellers
 
-SELECT NULL LIMIT 0
+
