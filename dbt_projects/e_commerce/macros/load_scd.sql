@@ -5,6 +5,17 @@
     destination_table
 ) %}
     {{ log("execute = " ~ execute, info=True) }}
+
+    {# 
+        The below if condition was required because the initial naming convention 
+        for bronze was incorrect.
+        To fix it, we needed to remove the bz_ prefix from the table name.
+    #} 
+
+    {% if source_table.startswith('brz_') %}
+        {% set source_table = source_table[4:] %}
+    {% endif %}
+
     {% set metadata = silver_get_table_metadata(
         source_schema,
         source_table,
@@ -54,8 +65,6 @@
         {{ scd2_load(source_schema, source_table, primary_keys, extract_date_column,
         scd2_columns,column_names, target_schema, target_table) 
         }}
-
-            -- Type 2 logic here
 
         {% endif %}
     {% endif %}

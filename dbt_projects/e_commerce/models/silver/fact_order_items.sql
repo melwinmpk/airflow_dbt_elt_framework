@@ -1,10 +1,6 @@
 {{ config(
-    materialized='table'
-) }}
-
-{{ config(
     materialized='incremental'
-    ,unique_key='customer_id'
+    ,unique_key='order_id'
     ,schema='silver'
 ) }}
 
@@ -20,5 +16,5 @@ select
     ,partition_key
 from {{ ref('brz_order_items') }}
 {% if is_incremental() %}
-    where partition_key > (    select max(partition_key) from {{ this }}  )
+    where partition_key > (    select COALESCE(MAX(partition_key), '190001')  from {{ this }}  )
 {% endif %}

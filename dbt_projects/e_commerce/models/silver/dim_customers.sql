@@ -17,5 +17,5 @@ select
     current_timestamp as created_at
 from {{ ref('brz_customers') }} 
 {% if is_incremental() %}
-    where partition_key > (    select max(partition_key) from {{ this }}  )
+    where partition_key > (    select COALESCE(MAX(partition_key), '190001') from {{ this }}  )
 {% endif %}

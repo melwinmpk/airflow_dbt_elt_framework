@@ -1,6 +1,7 @@
 {{ config(
-    materialized='view',
-    pre_hook=[
+    materialized='table'
+    ,schema='silver'
+    ,pre_hook=[
         "CREATE TABLE IF NOT EXISTS silver.dim_sellers ( 
             seller_id VARCHAR(32),
             seller_zip_code_prefix INTEGER,
@@ -12,13 +13,9 @@
             expired_date TIMESTAMP,
             is_latest BOOLEAN
         );",
-        "{% if execute %}{{ load_dimension('bronze', 'sellers', 'silver', 'dim_sellers') }}{% endif %}"
-    ],
-    post_hook=["{{ update_metadata('customer') }}"]
-) }}
-
-{{ config(
-    materialized='ephemeral'
+        "{{ load_dimension(ref('brz_sellers').schema, ref('brz_sellers').identifier, 'silver', this.identifier) }}"
+    ]
+    
 ) }}
 
 SELECT 
