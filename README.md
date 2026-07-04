@@ -146,6 +146,16 @@ Key implementations include:
 
 ---
 
+# Airflow Screenshots
+
+<img width="2553" height="1301" alt="Image" src="https://github.com/user-attachments/assets/b137016c-18d8-4a7d-b45e-1aa858c9a0cc" />
+
+<img width="2559" height="1305" alt="Image" src="https://github.com/user-attachments/assets/d306de1e-c555-46ea-b2a3-f14eadcca82f" />
+
+<img width="2559" height="1304" alt="Image" src="https://github.com/user-attachments/assets/10f65f94-f5a4-43eb-b894-75525f97bfb2" />
+
+<img width="2557" height="1291" alt="Image" src="https://github.com/user-attachments/assets/409c4c1e-fe10-478d-b7ed-dd6ecb187fdb" />
+
 # Future Enhancements
 
 * Integrate Great Expectations for automated data quality validation
