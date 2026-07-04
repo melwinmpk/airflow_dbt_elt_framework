@@ -1,0 +1,215 @@
+source /home/de24/python-environments/de/bin/activate
+
+1) airflow api-server
+2) airflow scheduler
+3) airflow dag-processor
+
+connect to postgress
+1) sudo -i -u postgres
+2) psql
+
+
+CREATE DATABASE ecom OWNER ecomm_user;
+
+sudo -u postgres psql -d ecom
+
+CREATE SCHEMA IF NOT EXISTS Raw;
+CREATE SCHEMA IF NOT EXISTS Bronze;
+CREATE SCHEMA IF NOT EXISTS Silver;
+CREATE SCHEMA IF NOT EXISTS Gold;
+
+GRANT ALL ON SCHEMA Raw TO ecomm_user;
+GRANT ALL ON SCHEMA Bronze TO ecomm_user;
+GRANT ALL ON SCHEMA Silver TO ecomm_user;
+GRANT ALL ON SCHEMA Gold TO ecomm_user;
+
+
+ALTER TABLE bronze.customer OWNER TO ecomm_user;
+
+-- Login to Postgress using ecomm_user 
+psql -h 127.0.0.1 -U ecomm_user -d ecom
+
+CREATE TABLE IF NOT EXISTS Bronze.customer (
+            customer_id VARCHAR(32),
+            customer_unique_id VARCHAR(32),
+            customer_zip_code_prefix INTEGER,
+            customer_city VARCHAR(32),
+            customer_state VARCHAR(2),
+            partition_key VARCHAR(6)
+        ) PARTITION BY LIST (partition_key);
+
+CREATE TABLE IF NOT EXISTS Bronze.customer (
+            customer_id VARCHAR(32),
+            customer_unique_id VARCHAR(32),
+            customer_zip_code_prefix INTEGER,
+            customer_city VARCHAR(32),
+            customer_state VARCHAR(2),
+            partition_key VARCHAR(6)
+        ) PARTITION BY LIST (partition_key);
+
+CREATE TABLE bronze.metadata_config (
+    table_name VARCHAR(32),
+    last_extracxt_date TIMESTAMP DEFAULT '2016-08-01 00:00:00',
+    tbl_query TEXT,
+    duration INTEGER DEFAULT 1,
+    duration_type VARCHAR(10) DEFAULT 'DAY'
+);
+
+
+INSERT INTO bronze.metadata_config (table_name,duration_type) VALUES ('customer','MONTH');
+
+
+connecting to mysql
+mysql -u root -p
+
+
+
+Customers → SCD2 candidate
+Products → SCD1
+Orders → Incremental fact
+Order items → Fact table
+Payments → Fact
+Sellers → Dimension
+Reviews → Fact
+
+
+update metadata_config
+set last_extracxt_date='2016-10-01 00:00:00'
+WHERE table_name = 'customer';
+
+update metadata_config
+set last_extracxt_date='2016-08-01 00:00:00';
+
+INSERT INTO bronze.metadata_config (table_name,duration_type) VALUES ('orders','MONTH');
+INSERT INTO bronze.metadata_config (table_name,duration_type) VALUES ('order_items','MONTH');
+INSERT INTO bronze.metadata_config (table_name,duration_type) VALUES ('order_items','MONTH');
+INSERT INTO bronze.metadata_config (table_name,duration_type) VALUES ('order_payments','MONTH');
+INSERT INTO bronze.metadata_config (table_name,duration_type) VALUES ('order_reviews','MONTH');
+INSERT INTO bronze.metadata_config (table_name,duration_type) VALUES ('sellers','MONTH');
+
+
+
+dbt run --select brz_customers
+dbt run --select brz_sellers
+dbt run --select brz_orders
+dbt run --select brz_order_items
+dbt run --select brz_order_payments
+dbt run --select brz_order_reviews
+dbt run --select dim_sellers
+dbt run --select dim_customers
+dbt run --select dim_payments
+
+dbt run --select  fact_orders 
+dbt run --select  fact_order_items 
+dbt run --select  +mart_sales_summary 
+
+
+CREATE TABLE silver.table_load_config (
+    config_id BIGSERIAL PRIMARY KEY,
+    source_schema VARCHAR(100) NOT NULL,
+    source_table VARCHAR(200) NOT NULL,
+    target_schema VARCHAR(100) NOT NULL,
+    target_table VARCHAR(200) NOT NULL,
+    extract_date_column VARCHAR(200),
+    load_type VARCHAR(20) NOT NULL
+        CHECK (load_type IN ('FULL', 'INCREMENTAL')),
+    scd_type SMALLINT NOT NULL
+        CHECK (scd_type IN (0, 1, 2)),
+    hash_column_name VARCHAR(200),
+    source_filter TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_source_target
+    UNIQUE (
+        source_schema,
+        source_table,
+        target_schema,
+        target_table
+    )
+);
+
+CREATE TABLE silver.table_column_config (
+    column_config_id BIGSERIAL PRIMARY KEY,
+    config_id BIGINT NOT NULL,
+    column_name VARCHAR(200) NOT NULL,
+    data_type VARCHAR(100) NOT NULL,
+    ordinal_position INTEGER NOT NULL,
+    nullable BOOLEAN DEFAULT TRUE,
+    is_primary_key BOOLEAN DEFAULT FALSE,
+    is_scd2_column BOOLEAN DEFAULT FALSE,
+    is_audit_column BOOLEAN DEFAULT FALSE,
+    default_value VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_table_column_config
+        FOREIGN KEY (config_id)
+        REFERENCES silver.table_load_config(config_id)
+);
+
+
+INSERT INTO silver.table_load_config (
+config_id,source_schema,source_table,target_schema,target_table,extract_date_column,load_type,scd_type,hash_column_name,source_filter
+) 
+VALUES (1,'bronze','sellers','silver','dim_sellers','partition_key','INCREMENTAL','2','record_hash','partition_key');
+
+INSERT INTO silver.table_column_config ( column_config_id,config_id,column_name,data_type,ordinal_position,nullable,is_primary_key,is_scd2_column,is_audit_column,default_value ) 
+VALUES                                 ( 1,1,'seller_id','VARCHAR',1,FALSE,TRUE,TRUE,FALSE,NULL),
+                                       ( 2,1,'seller_zip_code_prefix','INTEGER',2,FALSE,FALSE,TRUE,FALSE,NULL),
+                                       ( 3,1,'seller_city','VARCHAR',3,TRUE,FALSE,TRUE,FALSE,NULL),
+                                       ( 4,1,'seller_state','VARCHAR',4,TRUE,FALSE,TRUE,FALSE,NULL),
+                                       ( 5,1,'partition_key','VARCHAR',5,TRUE,FALSE,TRUE,FALSE,NULL),
+                                       ( 6,1,'record_hash','VARCHAR',6,TRUE,FALSE,FALSE,FALSE,NULL),
+                                       ( 7,1,'created_date','TIMESTAMP',7,TRUE,FALSE,FALSE,TRUE,NULL),
+                                       ( 8,1,'expired_date','TIMESTAMP',8,TRUE,FALSE,FALSE,TRUE,NULL),
+                                       ( 9,1,'is_latest','BOOLEAN',9,FALSE,FALSE,FALSE,FALSE,NULL);
+
+UPDATE silver.table_column_config
+SET is_scd2_column = FALSE
+WHERE column_config_id = 9 AND config_id = 1;
+
+
+-- for resetting a data in bronze
+-- delete foreign table 
+-- update the metadata table
+
+DROP FOREIGN TABLE Bronze.ext_sellers_201610;
+DROP FOREIGN TABLE Bronze.ext_sellers_201609;
+DROP FOREIGN TABLE Bronze.ext_order_payments_201610;
+
+
+DROP FOREIGN TABLE Bronze.ext_order_items_201609;
+DROP FOREIGN TABLE Bronze.ext_order_items_201610;
+DROP FOREIGN TABLE Bronze.ext_order_items_201611;
+
+UPDATE bronze.metadata_config 
+SET last_extracxt_date = '2016-08-01 00:00:00'
+WHERE table_name = 'order_items';
+
+
+DROP FOREIGN TABLE Bronze.ext_orders_201610;
+DROP FOREIGN TABLE Bronze.ext_orders_201609;
+
+Bronze.orders
+UPDATE bronze.metadata_config 
+SET last_extracxt_date = '2016-09-01 00:00:00'
+WHERE table_name = 'sellers';
+
+
+UPDATE bronze.metadata_config 
+SET table_name = 'brz_sellers';
+WHERE table_name = 'sellers';
+
+UPDATE bronze.metadata_config 
+SET last_extracxt_date = '2016-09-01 00:00:00'
+WHERE table_name = 'order_payments';
+
+UPDATE bronze.metadata_config 
+SET last_extracxt_date = '2016-08-01 00:00:00'
+WHERE table_name = 'orders';
+
+
+
+dbt docs generate
+dbt docs serve
+
