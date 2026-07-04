@@ -1,246 +1,157 @@
-# airflow_dbt_elt_framework
+# Retail Sales Analytics Platform
 
-# ELT Pipeline using Apache Airflow, DBT, MySQL and PostgreSQL
+## Business Problem
 
-## Project Overview
+E-commerce businesses generate large volumes of transactional data across customers, orders, products, sellers, and payments. While this data supports day-to-day operations, it is highly normalized and not optimized for analytical reporting. Business teams often struggle to answer questions such as:
 
-This project demonstrates an end-to-end ELT (Extract, Load, Transform) pipeline built using **Apache Airflow** and **DBT (Data Build Tool)**. The primary objective was to design a production-style data engineering pipeline while keeping infrastructure costs low by using open source technologies.
+* What are the overall sales trends?
+* Which sellers contribute the highest revenue?
+* How is seller performance changing over time?
+* What is the average order value?
+* How many orders have been completed?
 
-The pipeline extracts data from a MySQL database, loads it into PostgreSQL, and performs all business transformations using DBT. Airflow orchestrates the entire workflow, with Cosmos providing seamless integration between Airflow and DBT.
-
-This project was built to gain hands-on experience with modern data engineering practices including orchestration, data modeling, incremental loading, Slowly Changing Dimensions (SCD Type 2), DBT macros, hooks, and reusable transformation logic.
-
----
-
-# Project Objectives
-
-* Build an end-to-end ELT pipeline
-* Integrate Apache Airflow with DBT using Cosmos
-* Design Bronze, Silver, and Gold data layers
-* Implement SCD Type 2 using DBT
-* Build reusable DBT macros
-* Configure pre-hooks and post-hooks
-* Create incremental and full load strategies
-* Apply modular and scalable transformation logic
-* Follow data warehouse best practices
+To address these challenges, an analytics-ready data warehouse is required that transforms raw transactional data into curated datasets for reporting and business decision making.
 
 ---
 
-# Architecture
+# Solution
 
-```
-                Kaggle Dataset
-                       │
-                       ▼
-                  MySQL Database
-                       │
-                (Extract & Load)
-                       │
-                       ▼
-               Apache Airflow DAG
-                       │
-               Cosmos Integration
-                       │
-                       ▼
-             PostgreSQL Data Warehouse
-        ┌──────────┬──────────┬──────────┐
-        │          │          │
-     Bronze      Silver      Gold
-     Layer       Layer       Layer
-        │          │          │
-        └──────────┴──────────┘
-                  DBT
-```
+This project implements an end-to-end ELT pipeline using **Apache Airflow**, **DBT**, **Cosmos**, **MySQL**, and **PostgreSQL**.
+
+The pipeline extracts transactional data from MySQL, loads it into PostgreSQL, and transforms it through Bronze, Silver, and Gold layers using DBT. Airflow orchestrates the entire workflow, while Cosmos enables seamless integration between Airflow and DBT.
+
+The solution emphasizes modular, scalable, and maintainable data engineering practices through incremental processing, reusable DBT macros, hooks, and Slowly Changing Dimension (SCD Type 2) implementation.
 
 ---
 
-# Technology Stack
+# Business Outcomes
 
-| Component               | Technology                          |
-| ----------------------- | ----------------------------------- |
-| Workflow Orchestration  | Apache Airflow                      |
-| Transformation          | DBT                                 |
-| Airflow-DBT Integration | Cosmos                              |
-| Source Database         | MySQL                               |
-| Data Warehouse          | PostgreSQL                          |
-| Programming Language    | Python                              |
-| SQL Dialect             | PostgreSQL SQL                      |
-| Dataset                 | Kaggle Brazilian E-Commerce Dataset |
+The Gold layer provides business-ready data marts that simplify reporting and enable stakeholders to answer key business questions without querying multiple transactional tables.
 
----
+The implemented data marts provide insights into:
 
-# Dataset
-
-The project uses the **Brazilian E-Commerce Public Dataset by Olist** available on Kaggle.
-
-The dataset contains multiple related tables including:
-
-* Customers
-* Orders
-* Order Items
-* Payments
-* Reviews
-* Products
-* Sellers
-* Geolocation
-* Product Category Translation
+* Overall sales performance
+* Seller performance
+* Revenue trends
+* Order volume
+* Average order value
+* Top-performing sellers
 
 ---
 
-# Data Pipeline
+# Gold Layer Data Marts
 
-## 1. Extraction
+## mart_sales_summary
 
-Data is stored in a MySQL database and extracted through Apache Airflow.
+A business-ready summary table that provides high-level sales metrics for reporting and analytics.
 
-## 2. Loading
+**Example KPIs:**
 
-Airflow loads the raw data into the Bronze schema in PostgreSQL.
+* Total Revenue
+* Total Orders
+* Average Order Value
+* Monthly Sales Trend
 
-## 3. Transformation
+---
 
-DBT transforms Bronze data into Silver and Gold layers.
+## mart_seller_performance
+
+A seller-level analytical model used to evaluate seller performance.
+
+**Example KPIs:**
+
+* Revenue generated by each seller
+* Total orders fulfilled
+* Average order value
+* Seller ranking based on revenue
+
+---
+
+# Data Engineering Solution
+
+The project follows a Medallion Architecture.
 
 ### Bronze Layer
 
-* Raw source data
+* Raw data ingestion from MySQL
 * Minimal transformations
-* Source-aligned schema
+* Source-aligned tables
 
 ### Silver Layer
 
-* Data cleansing
-* Standardization
+* Data cleansing and standardization
 * Business transformations
 * Incremental loading
-* SCD Type 2 implementation
+* SCD Type 2 implementation for dimensional history
+* Reusable transformation logic using DBT macros
 
 ### Gold Layer
 
-* Analytics-ready data marts
-* Business reporting models
-* Aggregated datasets
+* Business-ready analytical models
+* Optimized reporting tables
+* Aggregated business metrics
+* Sales and seller performance reporting
 
 ---
 
-# Key Features Implemented
+# Technologies Used
 
-## Airflow
+* Apache Airflow
+* DBT (Data Build Tool)
+* Cosmos (Airflow-DBT Integration)
+* MySQL
+* PostgreSQL
+* Python
+* SQL
+* Jinja Templating
 
-* DAG-based orchestration
-* Task dependencies
-* DBT execution using Cosmos
-* Modular pipeline design
+---
 
-## DBT
+# DBT Features Implemented
+
+Throughout this project, the following DBT capabilities were implemented:
 
 * Models
 * Sources
-* Seeds (where applicable)
-* Incremental models
+* Incremental Models
 * Materializations
-* Macros
+* DBT Macros
+* Jinja Templating
 * Pre-hooks
 * Post-hooks
-* Jinja templating
-* Schema management
-* Dependency management using `ref()` and `source()`
-
-## SCD Type 2
-
-A reusable SCD Type 2 implementation was developed using DBT.
-
-Features include:
-
-* Historical record preservation
-* Record hashing for change detection
-* Active/inactive record management
-* Effective and expiry timestamps
-* Incremental processing
+* `ref()` and `source()` functions
+* Schema Configuration
+* Modular SQL Transformations
 
 ---
 
-# DBT Concepts Explored
+# Engineering Highlights
 
-During this project, I gained practical experience with:
+Key implementations include:
 
-* DBT project structure
-* Model dependencies
-* Incremental models
-* Materializations
-* Macros
-* Jinja templating
-* Hooks
-* Variables
-* Config blocks
-* Source definitions
-* Schema configuration
-* Custom SQL logic
-* Reusable transformations
-
----
-
-# Project Structure
-
-```
-project/
-│
-├── dags/
-│   ├── airflow_dags
-│
-├── dbt/
-│   ├── models/
-│   │   ├── bronze/
-│   │   ├── silver/
-│   │   └── gold/
-│   │
-│   ├── macros/
-│   ├── tests/
-│   ├── snapshots/
-│   └── dbt_project.yml
-│
-├── sql/
-├── requirements.txt
-└── README.md
-```
-
----
-
-# Learning Outcomes
-
-Through this project I gained hands-on experience in:
-
-* Designing modern ELT pipelines
-* Airflow orchestration
-* Integrating Airflow and DBT using Cosmos
-* Building layered data warehouse architecture
-* Writing reusable DBT macros
-* Implementing SCD Type 2 in DBT
-* Managing incremental data loads
-* Using Jinja for dynamic SQL generation
-* Developing modular and maintainable transformation logic
-* Applying data engineering best practices
-
----
-
-# Challenges
-
-One planned enhancement was integrating **Great Expectations** for automated data quality validation. Due to time constraints, this integration was not completed and is planned as a future enhancement.
+* End-to-end ELT orchestration using Apache Airflow
+* Airflow and DBT integration through Cosmos
+* Layered Bronze, Silver, and Gold architecture
+* Incremental data processing
+* Reusable DBT macros to reduce code duplication
+* Pre-hooks and post-hooks for automated processing
+* SCD Type 2 implementation for maintaining historical records
+* Business-focused Gold layer data marts for reporting
 
 ---
 
 # Future Enhancements
 
-* Integrate Great Expectations for data quality validation
-* Add DBT documentation generation and hosting
-* Implement CI/CD using GitHub Actions
+* Integrate Great Expectations for automated data quality validation
+* Add CI/CD for automated deployment
 * Containerize the project using Docker
-* Add automated testing for Airflow DAGs
 * Deploy the pipeline on a cloud platform
-* Implement monitoring and alerting
+* Expand the Gold layer with additional analytical data marts
 
 ---
 
-# Conclusion
+# Project Summary
 
-This project demonstrates the development of a complete ELT pipeline using Apache Airflow and DBT while leveraging MySQL and PostgreSQL to create a cost-effective local development environment. It showcases modern data engineering concepts such as orchestration, layered data modeling, incremental processing, reusable DBT macros, hooks, and SCD Type 2 implementation, providing a strong foundation for building scalable and maintainable data pipelines.
+This project demonstrates the development of a production-style ELT pipeline that transforms raw e-commerce transactional data into business-ready analytical models. Using Apache Airflow for orchestration, DBT for transformations, Cosmos for orchestration integration, MySQL as the source system, and PostgreSQL as the analytical data warehouse, the solution delivers scalable and maintainable data pipelines.
+
+The project showcases practical data engineering concepts including layered data architecture, incremental processing, reusable DBT macros, hooks, and SCD Type 2 implementation, while producing business-focused data marts that support sales and seller performance analysis.
