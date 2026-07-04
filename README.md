@@ -176,5 +176,6 @@ The project showcases practical data engineering concepts including layered data
 # Reference  
  Source Data Reference from Kaggle  
  Kaggle => https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce?utm_source=chatgpt.com => https://www.kaggle.com/datasets/terencicp/e-commerce-dataset-by-olist-as-an-sqlite-database
+ 
  Source Data EDA => https://github.com/melwinmpk/airflow_dbt_elt_framework/blob/main/Source%20Data%20EDA.ipynb
  
