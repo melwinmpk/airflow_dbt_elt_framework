@@ -171,3 +171,10 @@ Key implementations include:
 This project demonstrates the development of a production-style ELT pipeline that transforms raw e-commerce transactional data into business-ready analytical models. Using Apache Airflow for orchestration, DBT for transformations, Cosmos for orchestration integration, MySQL as the source system, and PostgreSQL as the analytical data warehouse, the solution delivers scalable and maintainable data pipelines.
 
 The project showcases practical data engineering concepts including layered data architecture, incremental processing, reusable DBT macros, hooks, and SCD Type 2 implementation, while producing business-focused data marts that support sales and seller performance analysis.
+
+
+# Reference  
+ Source Data Reference from Kaggle  
+ Kaggle => https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce?utm_source=chatgpt.com => https://www.kaggle.com/datasets/terencicp/e-commerce-dataset-by-olist-as-an-sqlite-database
+ Source Data EDA => https://github.com/melwinmpk/airflow_dbt_elt_framework/blob/main/Source%20Data%20EDA.ipynb
+ 
