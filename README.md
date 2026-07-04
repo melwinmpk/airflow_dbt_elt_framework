@@ -94,6 +94,12 @@ The project follows a Medallion Architecture.
 
 ---
 
+# Data Lineage
+
+<img width="2498" height="1258" alt="Image" src="https://github.com/user-attachments/assets/1a6210a4-56f1-464a-81f0-8f8bb88365e8" />
+
+<img width="2504" height="1249" alt="Image" src="https://github.com/user-attachments/assets/a9b965ff-c83a-4e18-8da0-535b6e970c9c" />
+
 # Technologies Used
 
 * Apache Airflow
