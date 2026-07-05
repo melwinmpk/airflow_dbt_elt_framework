@@ -92,6 +92,16 @@ The project follows a Medallion Architecture.
 * Aggregated business metrics
 * Sales and seller performance reporting
 
+# Data Pipeline Execution
+Source Data Loading from MySQL DB to Local Folder
+
+<img width="491" height="231" alt="Untitled Diagram drawio" src="https://github.com/user-attachments/assets/f6436189-10d9-4c8f-8509-80969d486be4" />
+
+Loading Data From Local Folder to Postgres via Foreign Table
+
+<img width="551" height="301" alt="Untitled Diagram drawio (1)" src="https://github.com/user-attachments/assets/356c607b-8a89-4a57-8be0-be5d331d29ee" />
+
+
 ---
 
 # Data Lineage
